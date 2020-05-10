@@ -20,10 +20,8 @@ public class Server {
         while (true) {
             try {
                 Socket clientSocket = serverSocket.accept();
-
                 ClientHandler clientHandler = new ClientHandler(clientSocket);
                 clientHandler.start();
-
             } catch (Exception e) {
                 e.printStackTrace();
                 break;

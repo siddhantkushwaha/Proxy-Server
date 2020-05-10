@@ -17,10 +17,8 @@ public class ClientHandler extends Thread {
     public static final Pattern GET_PATTERN = Pattern.compile("GET (.+) HTTP/(1\\.[01])",
             Pattern.CASE_INSENSITIVE);
 
-    private final Socket clientSocket;
     private Socket remoteSocket;
-
-
+    private final Socket clientSocket;
     private String requestHeaderFirstLine = "";
 
     public ClientHandler(Socket clientSocket) {

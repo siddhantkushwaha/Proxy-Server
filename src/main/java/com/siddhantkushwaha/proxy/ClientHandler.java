@@ -20,8 +20,8 @@ public class ClientHandler extends Thread {
     private final Socket clientSocket;
     private Socket remoteSocket;
 
-    private String fullHeader = "";
-    private String headerString = "";
+
+    private String requestHeaderFirstLine = "";
 
     public ClientHandler(Socket clientSocket) {
         this.clientSocket = clientSocket;
@@ -30,9 +30,9 @@ public class ClientHandler extends Thread {
     @Override
     public void run() {
         try {
-            readRequestHeader(clientSocket);
-            Matcher connect_matcher = CONNECT_PATTERN.matcher(headerString);
-            Matcher get_matcher = GET_PATTERN.matcher(headerString);
+            requestHeaderFirstLine = readHeader(clientSocket);
+            Matcher connect_matcher = CONNECT_PATTERN.matcher(requestHeaderFirstLine);
+            Matcher get_matcher = GET_PATTERN.matcher(requestHeaderFirstLine);
             if (connect_matcher.matches()) {
                 OutputStreamWriter outputStreamWriter = new OutputStreamWriter(clientSocket.getOutputStream(),
                         StandardCharsets.ISO_8859_1);
@@ -61,7 +61,7 @@ public class ClientHandler extends Thread {
                 proxyToServerCon.setUseCaches(false);
                 proxyToServerCon.setDoOutput(true);
 
-                forwardDataUtil(proxyToServerCon.getInputStream(), clientSocket.getOutputStream(), true);
+                forwardDataUtil(proxyToServerCon.getInputStream(), clientSocket.getOutputStream());
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -72,25 +72,19 @@ public class ClientHandler extends Thread {
         try {
             InputStream inputStream = inputSocket.getInputStream();
             OutputStream outputStream = outputSocket.getOutputStream();
-            forwardDataUtil(inputStream, outputStream, false);
+            forwardDataUtil(inputStream, outputStream);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    private void forwardDataUtil(InputStream inputStream, OutputStream outputStream, boolean intercept) {
+    private void forwardDataUtil(InputStream inputStream, OutputStream outputStream) {
         try {
             byte[] buffer = new byte[4096];
             int read;
             do {
                 read = inputStream.read(buffer);
                 if (read > 0) {
-
-                    System.out.println(headerString);
-                    if (intercept) {
-                        System.out.println(new String(buffer));
-                    }
-
                     outputStream.write(buffer, 0, read);
                     if (inputStream.available() < 1)
                         outputStream.flush();
@@ -101,15 +95,22 @@ public class ClientHandler extends Thread {
         }
     }
 
-    private void readRequestHeader(Socket socket) {
+    private String readHeader(Socket socket) {
         try {
             byte[] buffer = new byte[4096];
-            if (socket.getInputStream().read(buffer) > -1) {
-                fullHeader = new String(buffer);
-                headerString = fullHeader.substring(0, fullHeader.indexOf("\n")).strip();
+            int length = socket.getInputStream().read(buffer);
+            if (length > -1) {
+                String headerString = new String(buffer);
+                // System.out.println(headerString);
+
+                headerString = headerString.substring(0, headerString.indexOf("\n")).strip();
+                System.out.println(headerString);
+
+                return headerString;
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
+        return "";
     }
 }

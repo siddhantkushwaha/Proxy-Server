@@ -19,7 +19,6 @@ public class ClientHandler extends Thread {
 
     private Socket remoteSocket;
     private final Socket clientSocket;
-    private String requestHeaderFirstLine = "";
 
     public ClientHandler(Socket clientSocket) {
         this.clientSocket = clientSocket;
@@ -28,7 +27,7 @@ public class ClientHandler extends Thread {
     @Override
     public void run() {
         try {
-            requestHeaderFirstLine = readHeader(clientSocket);
+            String requestHeaderFirstLine = readHeader(clientSocket);
             Matcher connect_matcher = CONNECT_PATTERN.matcher(requestHeaderFirstLine);
             Matcher get_matcher = GET_PATTERN.matcher(requestHeaderFirstLine);
             if (connect_matcher.matches()) {
@@ -38,7 +37,6 @@ public class ClientHandler extends Thread {
                 outputStreamWriter.write("Proxy-agent: Simple/0.1\r\n");
                 outputStreamWriter.write("\r\n");
                 outputStreamWriter.flush();
-                outputStreamWriter.close();
 
                 remoteSocket = new Socket(connect_matcher.group(1), Integer.parseInt(connect_matcher.group(2)));
 
@@ -50,8 +48,6 @@ public class ClientHandler extends Thread {
 
                 remoteToClient.join();
                 clientToRemote.join();
-
-                remoteSocket.close();
             } else if (get_matcher.matches()) {
                 URL url = new URL(get_matcher.group(1));
 
@@ -64,10 +60,7 @@ public class ClientHandler extends Thread {
                 InputStream inputStream = proxyToServerCon.getInputStream();
                 OutputStream outputStream = clientSocket.getOutputStream();
                 forwardDataUtil(inputStream, outputStream);
-                inputStream.close();
-                outputStream.close();
             }
-            clientSocket.close();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -78,8 +71,6 @@ public class ClientHandler extends Thread {
             InputStream inputStream = inputSocket.getInputStream();
             OutputStream outputStream = outputSocket.getOutputStream();
             forwardDataUtil(inputStream, outputStream);
-            inputStream.close();
-            outputStream.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -111,11 +102,9 @@ public class ClientHandler extends Thread {
             int length = inputStream.read(buffer);
             if (length > -1) {
                 headerString = new String(buffer);
-                // System.out.println(headerString);
                 headerString = headerString.substring(0, headerString.indexOf("\n")).strip();
                 System.out.println(headerString);
             }
-            inputStream.close();
         } catch (Exception e) {
             e.printStackTrace();
         }

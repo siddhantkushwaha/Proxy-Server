@@ -5,6 +5,15 @@ plugins {
 group 'com.siddhantkushwaha.proxy'
 version '1.0'
 
+task fatJar(type: Jar) {
+    from { configurations.runTimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
+    manifest {
+        attributes 'Implementation-Title': 'Jar Build',
+                'Main-Class': 'com.siddhantkushwaha.proxy.Server'
+    }
+    with jar
+}
+
 repositories {
     mavenCentral()
 }
